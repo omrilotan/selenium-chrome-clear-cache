@@ -1,0 +1,34 @@
+version: 2.1
+jobs:
+  test:
+    working_directory: ~/app
+    docker:
+      - image: circleci/node:latest-browsers
+    steps:
+      - checkout
+      - run: npm i
+      - run: npm run lint
+      - run: npm t || npm t
+  publish:
+    docker:
+      - image: circleci/node:latest
+    steps:
+      - checkout
+      - run:
+          name: Add publish token
+          command: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+      - run: npm publish
+workflows:
+  version: 2.1
+  test:
+    jobs:
+      - test:
+          context: globalenv
+      - publish:
+          context: globalenv
+          requires:
+            - test
+          filters:
+            branches:
+              only:
+                - main
